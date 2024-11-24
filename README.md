@@ -1,5 +1,9 @@
 # vscode-fast-kaggle
 
+![fastkaggle](./images/fastkaggle_128x128.png)
+
+[![Version](https://vsmarketplacebadges.dev/version-short/smly.fastkaggle.svg)](https://marketplace.visualstudio.com/items?itemName=smly.fastkaggle)
+
 This is a Visual Studio Code extension that allows you to interact with Kaggle from within the editor. It is a wrapper around the Kaggle API, and provides a convenient way to update/list datasets and kernels.
 
 ## Features
