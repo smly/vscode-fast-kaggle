@@ -1,0 +1,13 @@
+{
+    "files.exclude": {
+        "**/dist": true,
+        "**/__pycache__": true,
+        "**/.ipynb_checkpoints": true,
+        "**/.pytest_cache": true,
+        "**/.venv": true,
+        "**/.git": true,
+        "**/.DS_Store": true,
+        "**/Thumbs.db": true
+    },
+    "fastkaggle.executablePath": "/Users/smly/.pyenv/shims/kaggle"
+}

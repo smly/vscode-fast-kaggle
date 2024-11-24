@@ -1,0 +1,89 @@
+{
+  "name": "fastkaggle",
+  "displayName": "Fast Kaggle",
+  "description": "Kaggle CLI Runner for VSCode",
+  "publisher": "smly",
+  "icon": "images/fastkaggle_128x128.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/smly/vscode-fast-kaggle"
+  },
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "FastKaggle",
+      "properties": {
+        "fastkaggle.executablePath": {
+          "type": "string",
+          "default": "",
+          "description": "Absolute path to the Kaggle executable"
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "fastkaggle.listCompetitions",
+        "title": "Kaggle: List Competitions"
+      },
+      {
+        "command": "fastkaggle.listDatasets",
+        "title": "Kaggle: List Datasets"
+      },
+      {
+        "command": "fastkaggle.listKernels",
+        "title": "Kaggle: List Kernels"
+      },
+      {
+        "command": "fastkaggle.updateDataset",
+        "title": "Kaggle: Update Dataset"
+      },
+      {
+        "command": "fastkaggle.updateKernel",
+        "title": "Kaggle: Update Kernel"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "fastkaggle.updateDataset",
+        "key": "ctrl+shift+u",
+        "mac": "ctrl+shift+u"
+      },
+      {
+        "command": "fastkaggle.updateKernel",
+        "key": "ctrl+shift+k",
+        "mac": "ctrl+shift+k"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.9",
+    "@types/node": "20.x",
+    "@types/vscode": "^1.95.0",
+    "@typescript-eslint/eslint-plugin": "^8.10.0",
+    "@typescript-eslint/parser": "^8.7.0",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1",
+    "eslint": "^9.13.0",
+    "typescript": "^5.6.3",
+    "vsce": "^2.15.0"
+  },
+  "dependencies": {
+    "@types/cacheable-request": "^6.0.3"
+  }
+}
