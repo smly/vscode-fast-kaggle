@@ -4,8 +4,6 @@ This is a Visual Studio Code extension that allows you to interact with Kaggle f
 
 ## Features
 
-TBD
-
 * `fastkaggle.updateDatasets` command. `kaggle d download -p /path/to/datasets` is executed. shotcut key: `Ctrl+Shift+D`.
 * `fastkaggle.updateKernels` command. `kaggle kernels pull -p /path/to/kernels` is executed. shotcut key: `Ctrl+Shift+K`.
 * `fastkaggle.listDatasets` command. `kaggle d list -m --sort-by updated` is executed and the output is displayed.
