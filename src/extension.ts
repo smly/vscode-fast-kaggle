@@ -32,6 +32,25 @@ function getKaggleExecutablePath(): string {
 	return '';
 }
 
+function spawn(cmd: string, args: string[], outputChannel: vscode.OutputChannel): Promise<void> {
+	return new Promise((resolve) => {
+		console.log(cmd, args);
+		let p = child_process.spawn(cmd, args);
+		p.on('exit', (code) => {
+			resolve();
+		});
+		p.stdout.setEncoding('utf-8');
+		p.stdout.on('data', (data) => {
+			console.log("(stdout)", data);
+			outputChannel.append(data);
+		});
+		p.stderr.on('data', (data) => {
+			console.log("(stderr)", data);
+			outputChannel.append(data);
+		});
+	});
+}
+
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
@@ -76,18 +95,34 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand('fastkaggle.updateDataset', async () => {
 			if (!vscode.window.activeTextEditor) {
 				vscode.window.showErrorMessage('No active text editor');
+				return;
 			}
+
+			/*
+			 * TODO: check if the dataset is already created.
+			 * データセットが作成されていないときは version sub-command で更新できないため、チェックが必要
+			 */
 			currentActivePath = vscode.window.activeTextEditor?.document.uri.fsPath;
+			if (!currentActivePath || currentActivePath === undefined) {
+				vscode.window.showErrorMessage('No active text editor');
+				return;
+			}
+
 			await updateDataset(currentActivePath);
-			outputChannel.show();
 		}),
 		vscode.commands.registerCommand('fastkaggle.updateKernel', async () => {
 			if (!vscode.window.activeTextEditor) {
 				vscode.window.showErrorMessage('No active text editor');
+				return;
 			}
+
 			currentActivePath = vscode.window.activeTextEditor?.document.uri.fsPath;
+			if (!currentActivePath || currentActivePath === undefined) {
+				vscode.window.showErrorMessage('No active text editor');
+				return;
+			}	
+	
 			await updateKernel(currentActivePath);
-			outputChannel.show();
 		}),
 	);
 
@@ -108,55 +143,46 @@ export function activate(context: vscode.ExtensionContext) {
 		return undefined;
 	}
 
-	async function updateKernel(path: string | undefined) {
-		if (!path || path === undefined) {
-			vscode.window.showErrorMessage('No active text editor');
-			return;
-		}
-
+	async function updateKernel(path: string) {
 		const workspaceRoot = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(path))?.uri.fsPath;
 		const kernelDir = findTargetDir("kernel-metadata.json", workspaceRoot, path);
-		if (kernelDir !== undefined) {
-			// show progress
-			const progress = await vscode.window.withProgress({
-				location: vscode.ProgressLocation.Notification,
-				title: "Updating kernel...",
-				cancellable: false
-			}, async (progress, token) => {
-				const command = `${kagglePath} kernels push -p ${kernelDir}`;
-				outputChannel.appendLine("> " + command);
-				child_process.exec(command, (error, stdout, stderror) => {
-					outputChannel.appendLine(stdout);
-					outputChannel.appendLine(stderror);
-				});
-			});
-		}
-	}
-
-	async function updateDataset(path: string | undefined) {
-		/* TODO: check if the dataset is already created. */
-		if (!path || path === undefined) {
+		if (!kernelDir || kernelDir === undefined) {
 			vscode.window.showErrorMessage('No active text editor');
 			return;
 		}
 
+		const progress = await vscode.window.withProgress({
+			location: vscode.ProgressLocation.Notification,
+			title: "Updating kernel...",
+			cancellable: false
+		}, async (progress, token) => {
+			outputChannel.clear();
+			outputChannel.show();
+			const command = `${kagglePath} kernels push -p ${kernelDir}`;
+			outputChannel.appendLine("> " + command);
+			await spawn(kagglePath, ['kernels', 'push', '-p', kernelDir], outputChannel);
+		});
+	}
+
+	async function updateDataset(path: string) {
 		const workspaceRoot = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(path))?.uri.fsPath;
 		const datasetDir = findTargetDir("dataset-metadata.json", workspaceRoot, path);
-		if (datasetDir !== undefined) {
-			// show progress
-			const progress = await vscode.window.withProgress({
-				location: vscode.ProgressLocation.Notification,
-				title: "Updating dataset...",
-				cancellable: false
-			}, async (progress, token) => {
-				const command = `${kagglePath} datasets version -m 'Updae from fastkaggle' -r zip -p ${datasetDir}`;
-				outputChannel.appendLine("> " + command);
-				child_process.exec(command, (error, stdout, stderror) => {
-					outputChannel.appendLine(stdout);
-					outputChannel.appendLine(stderror);
-				});
-			});
+		if (!datasetDir || datasetDir === undefined) {
+			vscode.window.showErrorMessage('No active text editor');
+			return;
 		}
+
+		const progress = await vscode.window.withProgress({
+			location: vscode.ProgressLocation.Notification,
+			title: "Updating dataset...",
+			cancellable: false
+		}, async (progress, token) => {
+			outputChannel.clear();
+			outputChannel.show();
+			const command = `${kagglePath} datasets version -m 'Updae from fastkaggle' -r zip -p ${datasetDir}`;
+			outputChannel.appendLine("> " + command);
+			await spawn(kagglePath, ['datasets', 'version', '-m', 'Updae from fastkaggle', '-r', 'zip', '-p', datasetDir], outputChannel);
+		});
 	}
 }
 
