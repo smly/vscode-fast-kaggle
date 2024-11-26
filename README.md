@@ -50,6 +50,8 @@ The status of the dataset or code is displayed based on the result of the status
 
 ### Commands: List Competitions
 
+**Usage**: `Cmd+Shift+P` to open the command palette and select "Kaggle: List Competitions".
+
 List recent competitions in order of deadline. `kaggle competitions list` is executed and the output is displayed.
 
 ![List Competitions](./images/competition_list.png)
