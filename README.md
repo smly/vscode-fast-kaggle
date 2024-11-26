@@ -25,6 +25,15 @@ If the path to the `kaggle` command is in the PATH of the shell, you can use thi
 
 ## Features
 
+### Commands: Update Datasets or Codes
+
+![command palette](./images/command_palette_update.png)
+
+**Usage**: `Cmd+Shift+P` to open the command palette and select "Kaggle: Update Dataset/Code".
+Or use the shortcut key `Ctrl+Shift+U`.
+
+This command search for the `dataset-metadata.json` or `kernel-metadata.json` file in the directory where the currently open file is located or in the parent directory, set that directory as the current directory, and execute the update command.
+
 ### Sidebar View for Datasets, Codes and Models
 
 The extension provides a sidebar view for datasets, codes and models.
@@ -38,15 +47,6 @@ Right-click to open the context menu and check the status of the Dataset or Code
 The status of the dataset or code is displayed based on the result of the status sub-command.
 
 ![Status Result](./images/output_status.png)
-
-### Commands: Update Datasets or Codes
-
-Search for the `dataset-metadata.json` file or `kernel-metadata.json` in the directory where the currently open file is located or in the parent directory, set that directory as the current directory, and execute the update command.
-
-![command palette](./images/command_palette_update.png)
-
-**Usage**: `Cmd+Shift+P` to open the command palette and select "Kaggle: Update Dataset/Code".
-Or use the shortcut key `Ctrl+Shift+U`.
 
 ### Commands: List Competitions
 
