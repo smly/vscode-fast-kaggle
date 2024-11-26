@@ -27,10 +27,10 @@ If the path to the `kaggle` command is in the PATH of the shell, you can use thi
 
 ### Commands: Update Datasets or Codes
 
-![command palette](./images/command_palette_update.png)
-
 **Usage**: `Cmd+Shift+P` to open the command palette and select "Kaggle: Update Dataset/Code".
 Or use the shortcut key `Ctrl+Shift+U`.
+
+![command palette](./images/command_palette_update.png)
 
 This command search for the `dataset-metadata.json` or `kernel-metadata.json` file in the directory where the currently open file is located or in the parent directory, set that directory as the current directory, and execute the update command.
 
