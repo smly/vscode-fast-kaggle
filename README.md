@@ -2,7 +2,7 @@
   <img src="./images/fastkaggle_128x128.png" alt="fastkaggle logo" title="FastKaggle" align="right" height="60" />
 </a>
 
-# Kaggle Extension for VS Code
+# VS Code Extension for Kaggle
 
 [![Version](https://vsmarketplacebadges.dev/version-short/smly.fastkaggle.svg)](https://marketplace.visualstudio.com/items?itemName=smly.fastkaggle)
 
