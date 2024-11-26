@@ -8,7 +8,7 @@
     "type": "git",
     "url": "https://github.com/smly/vscode-fast-kaggle"
   },
-  "version": "0.0.2",
+  "version": "0.0.3",
   "engines": {
     "vscode": "^1.95.0"
   },
@@ -34,34 +34,86 @@
         "title": "Kaggle: List Competitions"
       },
       {
-        "command": "fastkaggle.listDatasets",
-        "title": "Kaggle: List Datasets"
+        "command": "fastkaggle.updateDatasetOrCode",
+        "title": "Kaggle: Update Dataset/Code"
       },
       {
-        "command": "fastkaggle.listKernels",
-        "title": "Kaggle: List Kernels"
+        "command": "fastkaggle.refresh",
+        "title": "Refresh",
+        "icon": "$(refresh)"
       },
       {
-        "command": "fastkaggle.updateDataset",
-        "title": "Kaggle: Update Dataset"
+        "command": "fastkaggle.clipboardSlugName",
+        "title": "Copy Slug Name",
+        "icon": "$(clippy)"
       },
       {
-        "command": "fastkaggle.updateKernel",
-        "title": "Kaggle: Update Kernel"
+        "command": "fastkaggle.openInBrowser",
+        "title": "Open in Browser"
+      },
+      {
+        "command": "fastkaggle.showItemStatusFromTreeView",
+        "title": "Show status"
       }
     ],
     "keybindings": [
       {
-        "command": "fastkaggle.updateDataset",
+        "command": "fastkaggle.updateDatasetOrCode",
         "key": "ctrl+shift+u",
         "mac": "ctrl+shift+u"
-      },
-      {
-        "command": "fastkaggle.updateKernel",
-        "key": "ctrl+shift+k",
-        "mac": "ctrl+shift+k"
       }
-    ]
+    ],
+    "views": {
+      "explorer": [
+        {
+          "id": "kaggleItemView",
+          "name": "Kaggle",
+          "contextualTitle": "Kaggle"
+        }
+      ]
+    },
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "fastkaggle.refresh",
+          "when": "false"
+        },
+        {
+          "command": "fastkaggle.openInBrowser",
+          "when": "false"
+        },
+        {
+          "command": "fastkaggle.clipboardSlugName",
+          "when": "false"
+        },
+        {
+          "command": "fastkaggle.showItemStatusFromTreeView",
+          "when": "false"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "fastkaggle.refresh",
+          "when": "view == kaggleItemView",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "fastkaggle.clipboardSlugName",
+          "when": "view == kaggleItemView",
+          "group": "inline"
+        },
+        {
+          "command": "fastkaggle.openInBrowser",
+          "when": "view == kaggleItemView"
+        },
+        {
+          "command": "fastkaggle.showItemStatusFromTreeView",
+          "when": "view == kaggleItemView"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
