@@ -4,52 +4,30 @@ import * as vscode from 'vscode';
 import * as child_process from 'child_process'; // eslint-disable-line
 import * as path from 'path';
 import * as fs from 'fs';
+import { KaggleTreeItem } from './treeview/kaggleTreeItem';
+import { spawn, spawnWithStatus, getKaggleExecutablePath } from './command';
+import { KaggleTreeViewProvider } from './treeview/kaggleTreeViewProvider';
 
+export interface AppContext {
+	extension: vscode.ExtensionContext
+	articlesFolderUri: vscode.Uri;
+	outputChannel: vscode.OutputChannel;
+}
 
-function getKaggleExecutablePath(): string {
-	/*
-	 * 1. Check the setting value of 'fastkaggle.executablePath'
-	 * 2. Check the PATH environment variable
-	 */
-	const extensionConfig: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration('fastkaggle');
-	const settingValue: string = extensionConfig.get<string>("executablePath") || '';
-	if (path.isAbsolute(settingValue) && fs.existsSync(settingValue)) {
-		return settingValue;
-	}
-
-	var env = process.env['PATH'];
-	if (env === undefined) {
-		return '';
-	}
-
-	var paths = env.split(path.delimiter);
-	for (var i = 0; i < paths.length; i++) {
-		var p = path.join(paths[i], 'kaggle');
-		if (path.isAbsolute(p) && fs.existsSync(p)) {
-			return p;
+const clipboardSlugName = (context: vscode.ExtensionContext) => {
+	return async (treeItem?: KaggleTreeItem) => {
+		if (!treeItem) {
+			vscode.window.showErrorMessage('No item selected');
+			return;
 		}
-	}
-	return '';
-}
 
-function spawn(cmd: string, args: string[], outputChannel: vscode.OutputChannel): Promise<void> {
-	return new Promise((resolve) => {
-		console.log(cmd, args);
-		let p = child_process.spawn(cmd, args);
-		p.on('exit', (code) => {
-			resolve();
-		});
-		p.stdout.setEncoding('utf-8');
-		p.stdout.on('data', (data) => {
-			console.log("(stdout)", data);
-			outputChannel.append(data);
-		});
-		p.stderr.on('data', (data) => {
-			console.log("(stderr)", data);
-			outputChannel.append(data);
-		});
-	});
-}
+		if (typeof treeItem.slugname === 'string') {
+			vscode.env.clipboard.writeText(treeItem.slugname);
+		} else {
+			vscode.window.showErrorMessage('Selected item label is not a string');
+		}
+	};
+};
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -59,40 +37,33 @@ export function activate(context: vscode.ExtensionContext) {
 	if (kagglePath === '') {
 		vscode.window.showErrorMessage('kaggle executable not found');
 	}
+
 	let currentActivePath: string | undefined = undefined;
 
 	// The command has been defined in the package.json file
 	// Now provide the implementation of the command with registerCommand
 	// The commandId parameter must match the command field in package.json
+	const articlesFolderUri = vscode.Uri.file(path.join(context.extensionPath, 'articles'));
+	const appContext: AppContext = {
+		extension: context,
+		articlesFolderUri: articlesFolderUri,
+		outputChannel: outputChannel,
+	};
+	const kaggleTreeViewProvider = new KaggleTreeViewProvider(appContext);
+	vscode.window.registerTreeDataProvider('kaggleItemView', kaggleTreeViewProvider);
+
 	context.subscriptions.push(
 		vscode.commands.registerCommand('fastkaggle.listCompetitions', () => {
 			const command = `${kagglePath} competitions list`;
-			outputChannel.appendLine(command);
+			outputChannel.clear();
+			outputChannel.appendLine(new Date().toJSON() + " >> " + command);
 			child_process.exec(command, (error, stdout, stderror) => {
 				outputChannel.appendLine(stdout);
 				outputChannel.appendLine(stderror);
 			});
 			outputChannel.show();
 		}),
-		vscode.commands.registerCommand('fastkaggle.listDatasets', () => {
-			const command = `${kagglePath} datasets list -m --sort-by updated`;
-			outputChannel.appendLine(command);
-			child_process.exec(command, (error, stdout, stderror) => {
-				outputChannel.appendLine(stdout);
-				outputChannel.appendLine(stderror);
-			});
-			outputChannel.show();
-		}),
-		vscode.commands.registerCommand('fastkaggle.listKernels', () => {
-			const command = `${kagglePath} kernels list -m --sort-by dateRun`;
-			outputChannel.appendLine(command);
-			child_process.exec(command, (error, stdout, stderror) => {
-				outputChannel.appendLine(stdout);
-				outputChannel.appendLine(stderror);
-			});
-			outputChannel.show();
-		}),
-		vscode.commands.registerCommand('fastkaggle.updateDataset', async () => {
+		vscode.commands.registerCommand('fastkaggle.updateDatasetOrCode', async () => {
 			if (!vscode.window.activeTextEditor) {
 				vscode.window.showErrorMessage('No active text editor');
 				return;
@@ -108,23 +79,50 @@ export function activate(context: vscode.ExtensionContext) {
 				return;
 			}
 
-			await updateDataset(currentActivePath);
+			await updateDatasetOrCode(currentActivePath);
 		}),
-		vscode.commands.registerCommand('fastkaggle.updateKernel', async () => {
-			if (!vscode.window.activeTextEditor) {
-				vscode.window.showErrorMessage('No active text editor');
+		vscode.commands.registerCommand('fastkaggle.refresh', async () => {
+			kaggleTreeViewProvider.refresh();
+		}),
+		vscode.commands.registerCommand('fastkaggle.clipboardSlugName', clipboardSlugName(context)),
+		vscode.commands.registerCommand('fastkaggle.showItemStatusFromTreeView', async (treeItem: KaggleTreeItem) => {
+			if (treeItem.itemtype === "model") {
+				vscode.window.showErrorMessage('Model item is not supported for this command.');
 				return;
 			}
 
-			currentActivePath = vscode.window.activeTextEditor?.document.uri.fsPath;
-			if (!currentActivePath || currentActivePath === undefined) {
-				vscode.window.showErrorMessage('No active text editor');
-				return;
-			}	
-	
-			await updateKernel(currentActivePath);
+			if (treeItem.slugname && treeItem.itemtype) {
+				await showItemStatusFromTreeView(treeItem.itemtype, treeItem.slugname);
+			}
+		}),
+		vscode.commands.registerCommand('fastkaggle.openInBrowser', async (treeItem: KaggleTreeItem) => {
+			if (treeItem.resourceUri instanceof vscode.Uri) {
+				vscode.env.openExternal(treeItem.resourceUri);
+			} else {
+				vscode.window.showErrorMessage('Selected item url is not a string');
+			}
 		}),
 	);
+
+	async function showItemStatusFromTreeView(itemtype: string, slugname: string) {
+		const progress = await vscode.window.withProgress({
+			location: vscode.ProgressLocation.Notification,
+			title: "Check status...",
+			cancellable: false
+		}, async (progress, token) => {
+			outputChannel.clear();
+			outputChannel.show();
+			if (itemtype === "dataset") {
+				const command = `${kagglePath} datasets status ${slugname}`;
+				outputChannel.appendLine(new Date().toJSON() + " >> " + command);
+				await spawn(kagglePath, ['datasets', 'status', slugname], outputChannel);
+			} else if (itemtype === "code") {
+				const command = `${kagglePath} kernels status ${slugname}`;
+				outputChannel.appendLine(new Date().toJSON() + " >> " + command);
+				await spawn(kagglePath, ['kernels', 'status', slugname], outputChannel);
+			}
+		});
+	}
 
 	function findTargetDir(filename: string, workspaceRoot: string | undefined, path: string): string | undefined {
 		if (workspaceRoot === undefined) {
@@ -143,46 +141,41 @@ export function activate(context: vscode.ExtensionContext) {
 		return undefined;
 	}
 
-	async function updateKernel(path: string) {
-		const workspaceRoot = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(path))?.uri.fsPath;
-		const kernelDir = findTargetDir("kernel-metadata.json", workspaceRoot, path);
-		if (!kernelDir || kernelDir === undefined) {
-			vscode.window.showErrorMessage('No active text editor');
-			return;
-		}
-
-		const progress = await vscode.window.withProgress({
-			location: vscode.ProgressLocation.Notification,
-			title: "Updating kernel...",
-			cancellable: false
-		}, async (progress, token) => {
-			outputChannel.clear();
-			outputChannel.show();
-			const command = `${kagglePath} kernels push -p ${kernelDir}`;
-			outputChannel.appendLine("> " + command);
-			await spawn(kagglePath, ['kernels', 'push', '-p', kernelDir], outputChannel);
-		});
-	}
-
-	async function updateDataset(path: string) {
+	async function updateDatasetOrCode(path: string) {
 		const workspaceRoot = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(path))?.uri.fsPath;
 		const datasetDir = findTargetDir("dataset-metadata.json", workspaceRoot, path);
-		if (!datasetDir || datasetDir === undefined) {
+		const kernelDir = findTargetDir("kernel-metadata.json", workspaceRoot, path);
+		if ((!datasetDir || datasetDir === undefined) && (!kernelDir || kernelDir === undefined)){
 			vscode.window.showErrorMessage('No active text editor');
 			return;
 		}
 
-		const progress = await vscode.window.withProgress({
-			location: vscode.ProgressLocation.Notification,
-			title: "Updating dataset...",
-			cancellable: false
-		}, async (progress, token) => {
-			outputChannel.clear();
-			outputChannel.show();
-			const command = `${kagglePath} datasets version -m 'Updae from fastkaggle' -r zip -p ${datasetDir}`;
-			outputChannel.appendLine("> " + command);
-			await spawn(kagglePath, ['datasets', 'version', '-m', 'Updae from fastkaggle', '-r', 'zip', '-p', datasetDir], outputChannel);
-		});
+		if (datasetDir && datasetDir !== undefined) {
+			const progress = await vscode.window.withProgress({
+				location: vscode.ProgressLocation.Notification,
+				title: "Updating dataset...",
+				cancellable: false
+			}, async (progress, token) => {
+				outputChannel.clear();
+				outputChannel.show();
+				const command = `${kagglePath} datasets version -m 'update from vscode' -r zip -p ${datasetDir}`;
+				outputChannel.appendLine(new Date().toJSON() + " >> " + command);
+	
+				await spawn(kagglePath, ['datasets', 'version', '-m', 'updae from vscode', '-r', 'zip', '-p', datasetDir], outputChannel);
+			});
+		} else if (kernelDir && kernelDir !== undefined) {
+			const progress = await vscode.window.withProgress({
+				location: vscode.ProgressLocation.Notification,
+				title: "Updating kernel...",
+				cancellable: false
+			}, async (progress, token) => {
+				outputChannel.clear();
+				outputChannel.show();
+				const command = `${kagglePath} kernels push -p ${kernelDir}`;
+				outputChannel.appendLine(new Date().toJSON() + " >> " + command);
+				await spawn(kagglePath, ['kernels', 'push', '-p', kernelDir], outputChannel);
+			});
+		}
 	}
 }
 

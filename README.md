@@ -25,24 +25,33 @@ If the path to the `kaggle` command is in the PATH of the shell, you can use thi
 
 ## Features
 
-### Commands: Update Datasets
+### Sidebar View for Datasets, Codes and Models
 
-Search for the `dataset-metadata.json` file in the directory where the currently open file is located or in the parent directory, set that directory as the current directory, and execute `kaggle d download -p /path/to/datasets`.
+The extension provides a sidebar view for datasets, codes and models.
 
-**Shotcut**: `Ctrl+Shift+D`.
+![Sidebar View](./images/sidebar_view.png)
 
-### Commands: Update Kernels
+Right-click to open the context menu and check the status of the Dataset or Code.
 
-Search for the `kernel-metadata.json` file in the directory where the currently open file is located or in the parent directory, set that directory as the current directory, and execute `kaggle kernels pull -p /path/to/kernels`.
+![Context Menu](./images/sidebar_view_status.png)
 
-**Shotcut**: `Ctrl+Shift+K`.
+The status of the dataset or code is displayed based on the result of the status sub-command.
 
-### Commands: List Datasets
+![Status Result](./images/output_status.png)
 
-List recent datasets in order of update. `kaggle d list -m --sort-by updated` is executed and the output is displayed.
+### Commands: Update Datasets or Codes
 
-### Commands: List Kernels
+Search for the `dataset-metadata.json` file or `kernel-metadata.json` in the directory where the currently open file is located or in the parent directory, set that directory as the current directory, and execute the update command.
 
-List recent kernels in order of run date. `kaggle kernels list -m --sort-by dateRun` is executed and the output is displayed.
+![command palette](./images/command_palette_update.png)
+
+**Usage**: `Cmd+Shift+P` to open the command palette and select "Kaggle: Update Dataset/Code".
+Or use the shortcut key `Ctrl+Shift+U`.
+
+### Commands: List Competitions
+
+List recent competitions in order of deadline. `kaggle competitions list` is executed and the output is displayed.
+
+![List Competitions](./images/competition_list.png)
 
 **Enjoy!**
