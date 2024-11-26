@@ -54,4 +54,10 @@ List recent competitions in order of deadline. `kaggle competitions list` is exe
 
 ![List Competitions](./images/competition_list.png)
 
+## Further Development Plans
+
+* Add commands to support new codes or datasets
+* Add a simple validator for dataset-metadata.json and kernel-metadata.json
+* When updating a Dataset, if the Dataset does not exist in Kaggle, run the create command first
+
 **Enjoy!**
