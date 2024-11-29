@@ -1,7 +1,7 @@
 {
   "name": "fastkaggle",
-  "displayName": "Fast Kaggle",
-  "description": "Kaggle CLI Runner for VSCode",
+  "displayName": "FastKaggle",
+  "description": "VS Code Extension for Kaggle",
   "publisher": "smly",
   "icon": "images/fastkaggle_128x128.png",
   "repository": {
@@ -34,8 +34,16 @@
         "title": "Kaggle: List Competitions"
       },
       {
-        "command": "fastkaggle.updateDatasetOrCode",
-        "title": "Kaggle: Update Dataset/Code"
+        "command": "fastkaggle.newDataset",
+        "title": "Kaggle: New Dataset"
+      },
+      {
+        "command": "fastkaggle.newNotebook",
+        "title": "Kaggle: New Notebook"
+      },
+      {
+        "command": "fastkaggle.updateDatasetOrNotebook",
+        "title": "Kaggle: Update Dataset/Notebook"
       },
       {
         "command": "fastkaggle.getStatus",
@@ -62,7 +70,7 @@
     ],
     "keybindings": [
       {
-        "command": "fastkaggle.updateDatasetOrCode",
+        "command": "fastkaggle.updateDatasetOrNotebook",
         "key": "ctrl+shift+u",
         "mac": "ctrl+shift+u"
       },
