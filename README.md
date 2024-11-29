@@ -27,12 +27,14 @@ If the path to the `kaggle` command is in the PATH of the shell, you can use thi
 
 ### Commands: Update Datasets or Codes
 
-**Usage**: `Cmd+Shift+P` to open the command palette and select "Kaggle: Update Dataset/Code".
-Or use the shortcut key `Ctrl+Shift+U`.
+**Usage**: <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> to open the command palette and select "Kaggle: Update Dataset/Code".
+Or use the shortcut key <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>U</kbd>.
 
 ![command palette](./images/command_palette_update.png)
 
 This command search for the `dataset-metadata.json` or `kernel-metadata.json` file in the directory where the currently open file is located or in the parent directory, set that directory as the current directory, and execute the update command.
+
+Furthermore, by hitting the shortcut keys <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>K</kbd>, you can check the status of the updated Dataset/Code. This is especially useful when working with notebooks that have long non-interactive session execution times! ✨
 
 ### Sidebar View for Datasets, Codes and Models
 
@@ -50,7 +52,7 @@ The status of the dataset or code is displayed based on the result of the status
 
 ### Commands: List Competitions
 
-**Usage**: `Cmd+Shift+P` to open the command palette and select "Kaggle: List Competitions".
+**Usage**: <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> to open the command palette and select "Kaggle: List Competitions".
 
 List recent competitions in order of deadline. `kaggle competitions list` is executed and the output is displayed.
 

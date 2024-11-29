@@ -1,11 +1,9 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import * as child_process from 'child_process'; // eslint-disable-line
 import * as path from 'path';
 import * as fs from 'fs';
 import { KaggleTreeItem } from './treeview/kaggleTreeItem';
-import { spawn, spawnWithStatus, getKaggleExecutablePath } from './command';
+import { spawn, getKaggleExecutablePath } from './command';
 import { KaggleTreeViewProvider } from './treeview/kaggleTreeViewProvider';
 
 export interface AppContext {
@@ -29,20 +27,21 @@ const clipboardSlugName = (context: vscode.ExtensionContext) => {
 	};
 };
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
+const getSlugNameFromJson = (jsonPath: string): string => {
+	const json = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
+	return json['id'];
+};
+
 export function activate(context: vscode.ExtensionContext) {
 	var outputChannel = vscode.window.createOutputChannel("kaggle");
 	const kagglePath = getKaggleExecutablePath();
 	if (kagglePath === '') {
-		vscode.window.showErrorMessage('kaggle executable not found');
+		// Set fastkaggle.executablePath or make the kaggle command searchable in your PATH.
+		vscode.window.showErrorMessage('kaggle executable not found.');
 	}
 
 	let currentActivePath: string | undefined = undefined;
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
 	const articlesFolderUri = vscode.Uri.file(path.join(context.extensionPath, 'articles'));
 	const appContext: AppContext = {
 		extension: context,
@@ -80,6 +79,46 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 
 			await updateDatasetOrCode(currentActivePath);
+		}),
+		vscode.commands.registerCommand('fastkaggle.getStatus', async () => {
+			if (!vscode.window.activeTextEditor) {
+				vscode.window.showErrorMessage('No active text editor');
+				return;
+			}
+
+			currentActivePath = vscode.window.activeTextEditor?.document.uri.fsPath;
+			if (!currentActivePath || currentActivePath === undefined) {
+				vscode.window.showErrorMessage('No active text editor');
+				return;
+			}
+
+			const workspaceRoot = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(currentActivePath))?.uri.fsPath;
+			const datasetDir = findTargetDir("dataset-metadata.json", workspaceRoot, currentActivePath);
+			const kernelDir = findTargetDir("kernel-metadata.json", workspaceRoot, currentActivePath);
+			if ((!datasetDir || datasetDir === undefined) && (!kernelDir || kernelDir === undefined)){
+				vscode.window.showErrorMessage('No active text editor');
+				return;
+			}
+
+			const doc = vscode.window.activeTextEditor?.document;
+			outputChannel.clear();
+			outputChannel.show();
+			// Return focus to the open editor
+			if (doc) {
+				vscode.window.showTextDocument(doc);
+			}
+
+			if (datasetDir && datasetDir !== undefined) {
+				const slugName = getSlugNameFromJson(`${datasetDir}/dataset-metadata.json`);
+				const command = `${kagglePath} datasets status ${slugName}`;
+				outputChannel.appendLine(new Date().toJSON() + " >> " + command);
+				await spawn(kagglePath, ['datasets', 'status', slugName], outputChannel);
+			} else if (kernelDir && kernelDir !== undefined) {
+				const slugName = getSlugNameFromJson(`${kernelDir}/kernel-metadata.json`);
+				const command = `${kagglePath} kernels status ${slugName}`;
+				outputChannel.appendLine(new Date().toJSON() + " >> " + command);
+				await spawn(kagglePath, ['kernels', 'status', slugName], outputChannel);
+			}
 		}),
 		vscode.commands.registerCommand('fastkaggle.refresh', async () => {
 			kaggleTreeViewProvider.refresh();
@@ -150,14 +189,20 @@ export function activate(context: vscode.ExtensionContext) {
 			return;
 		}
 
+		const doc = vscode.window.activeTextEditor?.document;
+		outputChannel.clear();
+		outputChannel.show();
+		// Return focus to the open editor
+		if (doc) {
+			vscode.window.showTextDocument(doc);
+		}
+
 		if (datasetDir && datasetDir !== undefined) {
 			const progress = await vscode.window.withProgress({
 				location: vscode.ProgressLocation.Notification,
 				title: "Updating dataset...",
 				cancellable: false
 			}, async (progress, token) => {
-				outputChannel.clear();
-				outputChannel.show();
 				const command = `${kagglePath} datasets version -m 'update from vscode' -r zip -p ${datasetDir}`;
 				outputChannel.appendLine(new Date().toJSON() + " >> " + command);
 	
@@ -169,8 +214,6 @@ export function activate(context: vscode.ExtensionContext) {
 				title: "Updating kernel...",
 				cancellable: false
 			}, async (progress, token) => {
-				outputChannel.clear();
-				outputChannel.show();
 				const command = `${kagglePath} kernels push -p ${kernelDir}`;
 				outputChannel.appendLine(new Date().toJSON() + " >> " + command);
 				await spawn(kagglePath, ['kernels', 'push', '-p', kernelDir], outputChannel);
