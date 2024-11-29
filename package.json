@@ -38,6 +38,10 @@
         "title": "Kaggle: Update Dataset/Code"
       },
       {
+        "command": "fastkaggle.getStatus",
+        "title": "Kaggle: Get Status"
+      },
+      {
         "command": "fastkaggle.refresh",
         "title": "Refresh",
         "icon": "$(refresh)"
@@ -61,6 +65,11 @@
         "command": "fastkaggle.updateDatasetOrCode",
         "key": "ctrl+shift+u",
         "mac": "ctrl+shift+u"
+      },
+      {
+        "command": "fastkaggle.getStatus",
+        "key": "ctrl+shift+k",
+        "mac": "ctrl+shift+k"
       }
     ],
     "views": {
@@ -88,6 +97,10 @@
         },
         {
           "command": "fastkaggle.showItemStatusFromTreeView",
+          "when": "false"
+        },
+        {
+          "command": "fastkaggle.getStatus",
           "when": "false"
         }
       ],
