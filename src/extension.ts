@@ -3,7 +3,7 @@ import * as child_process from 'child_process'; // eslint-disable-line
 import * as path from 'path';
 import * as fs from 'fs';
 import { KaggleTreeItem } from './treeview/kaggleTreeItem';
-import { spawn, getKaggleExecutablePath } from './command';
+import { spawn, spawnForExistCheck, spawnToGetUsername, getKaggleExecutablePath } from './command';
 import { KaggleTreeViewProvider } from './treeview/kaggleTreeViewProvider';
 
 export interface AppContext {
@@ -62,23 +62,174 @@ export function activate(context: vscode.ExtensionContext) {
 			});
 			outputChannel.show();
 		}),
-		vscode.commands.registerCommand('fastkaggle.updateDatasetOrCode', async () => {
+		vscode.commands.registerCommand('fastkaggle.newDataset', async () => {
+			const datasetDir = await vscode.window.showInputBox();
+
+			// Validate input datasetDir name
+			// * The title must be between 6 and 50 characters in length.
+			// * Symbols are not allowed except for hyphnes.
+			if (datasetDir && datasetDir.length < 6) {
+				vscode.window.showErrorMessage('The title must be between 6 and 50 characters in length.');
+				return;
+			}
+			if (datasetDir && datasetDir.length > 50) {
+				vscode.window.showErrorMessage('The title must be between 6 and 50 characters in length.');
+				return;
+			}
+			if (datasetDir && datasetDir.match(/[^a-zA-Z0-9-]/)) {
+				vscode.window.showErrorMessage('Symbols are not allowed except for hyphnes.');
+				return;
+			}
+
+			if (datasetDir) {
+				const username = await spawnToGetUsername(kagglePath, ["config", "view"], outputChannel);
+				vscode.window.showInformationMessage(`Created a new dataset: ${datasetDir}`);
+				// create a new dataset `datasetDir` under the project root.
+				// 1. create a `datasetDir` directory.
+				// 2. write the template `dataset-metadata.json` file.
+				// 3. open the `dataset-metadata.json` file.
+
+				// todo: get username from kaggle config
+				// set "id" as "<username>/<datasetDir>"
+				const datasetMetadataJson = {
+					"id": `${username}/${datasetDir}`,
+					"title": datasetDir,
+					"licenses": [
+						{
+							"name": "CC0-1.0"
+						}
+					]
+				};
+				const datasetMetadataJsonString = JSON.stringify(datasetMetadataJson, null, 4);
+				currentActivePath = vscode.window.activeTextEditor?.document.uri.fsPath;
+				if (!currentActivePath || currentActivePath === undefined) {
+					vscode.window.showErrorMessage('No active text editor');
+					return;
+				}
+	
+				const workspaceRoot = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(currentActivePath))?.uri.fsPath;
+				if (workspaceRoot === undefined) {
+					vscode.window.showErrorMessage('No active text editor');
+					return;
+				}
+
+				const datasetDirPath = `${workspaceRoot}/${datasetDir}`;
+				const datasetMetadataJsonPath = path.join(datasetDirPath, 'dataset-metadata.json');
+				fs.mkdirSync(datasetDirPath, { recursive: true });
+				fs.writeFileSync(datasetMetadataJsonPath, datasetMetadataJsonString);
+				const datasetMetadataJsonUri = vscode.Uri.file(datasetMetadataJsonPath);
+				const datasetMetadataJsonDoc = await vscode.workspace.openTextDocument(datasetMetadataJsonUri);
+				await vscode.window.showTextDocument(datasetMetadataJsonDoc);
+			}
+		}),
+		vscode.commands.registerCommand('fastkaggle.newNotebook', async () => {
+			const notebookDir = await vscode.window.showInputBox();
+
+			// Validate input datasetDir name
+			// * The title must be between 6 and 50 characters in length.
+			// * Symbols are not allowed except for hyphnes.
+			if (notebookDir && notebookDir.length < 6) {
+				vscode.window.showErrorMessage('The title must be between 6 and 50 characters in length.');
+				return;
+			}
+			if (notebookDir && notebookDir.length > 50) {
+				vscode.window.showErrorMessage('The title must be between 6 and 50 characters in length.');
+				return;
+			}
+			if (notebookDir && notebookDir.match(/[^a-zA-Z0-9-]/)) {
+				vscode.window.showErrorMessage('Symbols are not allowed except for hyphnes.');
+				return;
+			}
+
+			if (notebookDir) {
+				const username = await spawnToGetUsername(kagglePath, ["config", "view"], outputChannel);
+				vscode.window.showInformationMessage(`Created a new dataset: ${notebookDir}`);
+				// create a new dataset `datasetDir` under the project root.
+				// 1. create a `datasetDir` directory.
+				// 2. write the template `dataset-metadata.json` file.
+				// 3. open the `dataset-metadata.json` file.
+
+				// todo: get username from kaggle config
+				// set "id" as "<username>/<datasetDir>"
+				const jupyterNotebookContent = {
+					"cells": [
+						{
+							"cell_type": "code",
+							"execution_count": null,
+							"metadata": {},
+							"outputs": [],
+							"source": []
+						}
+					],
+					"metadata": {
+						"kernelspec": {
+							"display_name": "Python 3",
+							"language": "python",
+							"name": "python3"
+						},
+						"language_info": {
+							"name": "python",
+							"version": "3.13.0"
+						}
+					},
+					"nbformat": 4,
+					"nbformat_minor": 2
+				};
+				const notebookMetadataJson = {
+					"id": `${username}/${notebookDir}`,
+					"title": notebookDir,
+					"code_file": "main.ipynb",
+					"language": "python",
+					"kernel_type": "notebook",
+					"is_private": "true",
+					"enable_gpu": "true",
+					"enable_tpu": "false",
+					"enable_internet": "false",
+					"dataset_sources": [],
+					"competition_sources": [],
+					"kernel_sources": [],
+					"model_sources": []
+				};
+				const notebookMetadataJsonString = JSON.stringify(notebookMetadataJson, null, 4);
+				currentActivePath = vscode.window.activeTextEditor?.document.uri.fsPath;
+				if (!currentActivePath || currentActivePath === undefined) {
+					vscode.window.showErrorMessage('No active text editor');
+					return;
+				}
+	
+				const workspaceRoot = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(currentActivePath))?.uri.fsPath;
+				if (workspaceRoot === undefined) {
+					vscode.window.showErrorMessage('No active text editor');
+					return;
+				}
+
+				const notebookDirPath = `${workspaceRoot}/${notebookDir}`;
+				const notebookMetadataJsonPath = path.join(notebookDirPath, 'kernel-metadata.json');
+				fs.mkdirSync(notebookDirPath, { recursive: true });
+				fs.writeFileSync(notebookMetadataJsonPath, notebookMetadataJsonString);
+
+				const notebookContentString = JSON.stringify(jupyterNotebookContent, null, 4);
+				const notebookContentJsonPath = path.join(notebookDirPath, 'main.ipynb');
+				fs.mkdirSync(notebookDirPath, { recursive: true });
+				fs.writeFileSync(notebookContentJsonPath, notebookContentString);
+
+				const notebookMetadataJsonUri = vscode.Uri.file(notebookMetadataJsonPath);
+				const notebookMetadataJsonDoc = await vscode.workspace.openTextDocument(notebookMetadataJsonUri);
+				await vscode.window.showTextDocument(notebookMetadataJsonDoc);
+			}
+		}),
+		vscode.commands.registerCommand('fastkaggle.updateDatasetOrNotebook', async () => {
 			if (!vscode.window.activeTextEditor) {
 				vscode.window.showErrorMessage('No active text editor');
 				return;
 			}
-
-			/*
-			 * TODO: check if the dataset is already created.
-			 * データセットが作成されていないときは version sub-command で更新できないため、チェックが必要
-			 */
 			currentActivePath = vscode.window.activeTextEditor?.document.uri.fsPath;
 			if (!currentActivePath || currentActivePath === undefined) {
 				vscode.window.showErrorMessage('No active text editor');
 				return;
 			}
 
-			await updateDatasetOrCode(currentActivePath);
+			await updateDatasetOrNotebook(currentActivePath);
 		}),
 		vscode.commands.registerCommand('fastkaggle.getStatus', async () => {
 			if (!vscode.window.activeTextEditor) {
@@ -180,7 +331,7 @@ export function activate(context: vscode.ExtensionContext) {
 		return undefined;
 	}
 
-	async function updateDatasetOrCode(path: string) {
+	async function updateDatasetOrNotebook(path: string) {
 		const workspaceRoot = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(path))?.uri.fsPath;
 		const datasetDir = findTargetDir("dataset-metadata.json", workspaceRoot, path);
 		const kernelDir = findTargetDir("kernel-metadata.json", workspaceRoot, path);
@@ -203,10 +354,19 @@ export function activate(context: vscode.ExtensionContext) {
 				title: "Updating dataset...",
 				cancellable: false
 			}, async (progress, token) => {
-				const command = `${kagglePath} datasets version -m 'update from vscode' -r zip -p ${datasetDir}`;
+				const slugName = getSlugNameFromJson(`${datasetDir}/dataset-metadata.json`);
+				const command = `${kagglePath} datasets status ${slugName}`;
 				outputChannel.appendLine(new Date().toJSON() + " >> " + command);
-	
-				await spawn(kagglePath, ['datasets', 'version', '-m', 'updae from vscode', '-r', 'zip', '-p', datasetDir], outputChannel);
+				const existDataset = await spawnForExistCheck(kagglePath, ['datasets', 'status', slugName], outputChannel);
+				if (!existDataset) {
+					const command = `${kagglePath} datasets create -r zip -p ${datasetDir}`;
+					outputChannel.appendLine(new Date().toJSON() + " >> " + command);
+					await spawn(kagglePath, ['datasets', 'create', '-r', 'zip', '-p', datasetDir], outputChannel);
+				} else {
+					const command = `${kagglePath} datasets version -m 'update from vscode' -r zip -p ${datasetDir}`;
+					outputChannel.appendLine(new Date().toJSON() + " >> " + command);
+					await spawn(kagglePath, ['datasets', 'version', '-m', 'updae from vscode', '-r', 'zip', '-p', datasetDir], outputChannel);
+				}
 			});
 		} else if (kernelDir && kernelDir !== undefined) {
 			const progress = await vscode.window.withProgress({
