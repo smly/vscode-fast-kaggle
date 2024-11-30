@@ -17,11 +17,11 @@ You need to have the [Kaggle CLI](https://github.com/Kaggle/kaggle-api) installe
 $ pip install kaggle
 ```
 
-If the path to the `kaggle` command is in the PATH of the shell, you can use this extension without any settings. You can specify the path to the `kaggle` executable in the `settings.json`. For example:
+This extension contributes the following settings:
 
-```diff
-+    "fastkaggle.executablePath": "/path/to/executable/kaggle"
-```
+* `fastkaggle.executablePath`: Path to `kaggle` executable.
+
+If the path to the `kaggle` command is in the PATH of the shell, you can use this extension without any settings.
 
 ## Features
 
@@ -57,11 +57,5 @@ The status of the dataset or code is displayed based on the result of the status
 List recent competitions in order of deadline. `kaggle competitions list` is executed and the output is displayed.
 
 ![List Competitions](./images/competition_list.png)
-
-## Further Development Plans
-
-* Add commands to support new codes or datasets
-* Add a simple validator for dataset-metadata.json and kernel-metadata.json
-* When updating a Dataset, if the Dataset does not exist in Kaggle, run the create command first
 
 **Enjoy!**
