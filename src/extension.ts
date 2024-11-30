@@ -5,6 +5,16 @@ import * as fs from 'fs';
 import { KaggleTreeItem } from './treeview/kaggleTreeItem';
 import { spawn, spawnForExistCheck, spawnToGetUsername, getKaggleExecutablePath } from './command';
 import { KaggleTreeViewProvider } from './treeview/kaggleTreeViewProvider';
+import { workspace, ExtensionContext } from 'vscode';
+
+import {
+    LanguageClient,
+    LanguageClientOptions,
+    ServerOptions,
+    TransportKind
+} from 'vscode-languageclient/node';
+
+let client: LanguageClient;
 
 export interface AppContext {
 	extension: vscode.ExtensionContext
@@ -33,6 +43,40 @@ const getSlugNameFromJson = (jsonPath: string): string => {
 };
 
 export function activate(context: vscode.ExtensionContext) {
+    const serverModule = context.asAbsolutePath(
+        path.join('out', 'server.js')
+    );
+    const debugOptions = { execArgv: ['--nolazy', '--inspect=6009'] };
+
+    const serverOptions: ServerOptions = {
+        run: { module: serverModule, transport: TransportKind.ipc },
+        debug: {
+            module: serverModule,
+            transport: TransportKind.ipc,
+            options: debugOptions
+        }
+    };
+
+    const clientOptions: LanguageClientOptions = {
+		documentSelector: [{
+			scheme: 'file',
+			language: 'json',
+			pattern: '**/{dataset,kernel}-metadata.json'
+		}],
+        synchronize: {
+            configurationSection: 'kaggleJsonSchemaLinter',
+            fileEvents: workspace.createFileSystemWatcher('**/*.json') // *.json ファイルの変更を監視
+        }
+    };
+
+    client = new LanguageClient(
+        'kaggleJsonSchemaLinter',
+        'Kaggle JSON Schema Linter',
+        serverOptions,
+        clientOptions
+    );
+	client.start();
+
 	var outputChannel = vscode.window.createOutputChannel("kaggle");
 	const kagglePath = getKaggleExecutablePath();
 	if (kagglePath === '') {
@@ -383,4 +427,9 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 // This method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate(): Thenable<void> | undefined {
+	if (!client) {
+		return undefined;
+	}
+	return client.stop();
+}
