@@ -31,11 +31,11 @@ export class KaggleTreeViewProvider implements TreeDataProvider {
           : new KaggleTreeItem(result)
       );
       return treeItems;
-    } else if (element && element.label === "Codes") {
+    } else if (element && element.label === "Notebooks") {
       const codesContents = await getCodesContents(this.context);
       const treeItems = codesContents.map((result) =>
         ArticleContentError.isError(result)
-          ? new vscode.TreeItem("Failed to load kaggle codes")
+          ? new vscode.TreeItem("Failed to load kaggle notebooks")
           : new KaggleTreeItem(result)
       );
       return treeItems;
@@ -54,7 +54,7 @@ export class KaggleTreeViewProvider implements TreeDataProvider {
 
     return [
       new vscode.TreeItem("Datasets", vscode.TreeItemCollapsibleState.Expanded),
-      new vscode.TreeItem("Codes", vscode.TreeItemCollapsibleState.Expanded),
+      new vscode.TreeItem("Notebooks", vscode.TreeItemCollapsibleState.Expanded),
       new vscode.TreeItem("Models", vscode.TreeItemCollapsibleState.Expanded),
     ];
   }

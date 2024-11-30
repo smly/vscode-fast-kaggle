@@ -37,6 +37,8 @@ Quickly check the status of your updated datasets and notebooks by pressing <kbd
 
 * **Command Palette**: <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> then select "Kaggle: New Dataset" or "Kaggle: New Notebook".
 
+This command will generate metadata and a plain jupyter notebook. It helps you quickly create new notebooks and datasets.
+
 ### Metadata Validation
 
 The extension validates the JSON schema of `kernel-metadata.json` and `dataset-metadata.json` files, ensuring your Kaggle dataset and notebook definitions are correct.
