@@ -1,8 +1,8 @@
-## 0.0.4
+## 1.0.0
 
 * **[Enhancement]**: Added status command https://github.com/smly/vscode-fast-kaggle/pull/3
 * **[Enhancement]**: Added new command https://github.com/smly/vscode-fast-kaggle/pull/4
-* **[Enhancement]**: Added a language server for validating Kaggle metadata files.
+* **[Enhancement]**: Added a language server for validating Kaggle metadata files. https://github.com/smly/vscode-fast-kaggle/pull/5
 
 ## 0.0.3
 
