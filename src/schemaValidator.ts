@@ -72,13 +72,14 @@ export class SchemaValidator {
                                 const range_end = {
                                     line: line, character: end
                                 };
+                                const validatorMsg = `${error.instancePath} ${error.message || 'Validation error'}`;
                                 return {
                                     severity: DiagnosticSeverity.Warning,
                                     range: {
                                         start: range_start,
                                         end: range_end
                                     },
-                                    message: `${error.instancePath} ${error.message || 'Validation error'}`,
+                                    message: validatorMsg,
                                     source: 'kaggle-metadta-validator'
                                 };
                             }

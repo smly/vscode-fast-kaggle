@@ -5,10 +5,9 @@ import * as child_process from 'child_process';  // eslint-disable-line
 
 
 export interface Dataset {
-  slug?: string;
-  type?: "tech" | "idea";
-  title?: string;
-  published_at?: string;
+  slug: string;
+  title: string;
+  published_at: string;
 }
 
 export interface DatasetContent {
