@@ -17,12 +17,12 @@ import {
 let client: LanguageClient;
 
 export interface AppContext {
-	extension: vscode.ExtensionContext
+	extension: ExtensionContext
 	articlesFolderUri: vscode.Uri;
 	outputChannel: vscode.OutputChannel;
 }
 
-const clipboardSlugName = (context: vscode.ExtensionContext) => {
+const clipboardSlugName = (context: ExtensionContext) => {
 	return async (treeItem?: KaggleTreeItem) => {
 		if (!treeItem) {
 			vscode.window.showErrorMessage('No item selected');
@@ -42,7 +42,7 @@ const getSlugNameFromJson = (jsonPath: string): string => {
 	return json['id'];
 };
 
-export function activate(context: vscode.ExtensionContext) {
+export function activate(context: ExtensionContext) {
     const serverModule = context.asAbsolutePath(
         path.join('out', 'server.js')
     );

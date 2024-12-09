@@ -1,7 +1,9 @@
 import * as vscode from "vscode";
 import { AppContext } from "../extension";
 import { KaggleTreeItem } from "./kaggleTreeItem";
-import { getArticleContents, getCodesContents, getModelsContents, ArticleContentError } from "../schemas/article";
+import { getDatasetContents, DatasetContentError } from "../schemas/datasets";
+import { getModelsContents, ModelContentError } from "../schemas/models";
+import { getCodesContents, CodeContentError } from "../schemas/codes";
 
 type TreeDataProvider = vscode.TreeDataProvider<vscode.TreeItem>;
 
@@ -24,9 +26,9 @@ export class KaggleTreeViewProvider implements TreeDataProvider {
 
   async getChildren(element?: vscode.TreeItem): Promise<vscode.TreeItem[]> {
     if (element && element.label === "Datasets") {
-      const articleContents = await getArticleContents(this.context);
-      const treeItems = articleContents.map((result) =>
-        ArticleContentError.isError(result)
+      const datasetContents = await getDatasetContents(this.context);
+      const treeItems = datasetContents.map((result) =>
+        DatasetContentError.isError(result)
           ? new vscode.TreeItem("Failed to load kaggle datasets")
           : new KaggleTreeItem(result)
       );
@@ -34,17 +36,17 @@ export class KaggleTreeViewProvider implements TreeDataProvider {
     } else if (element && element.label === "Notebooks") {
       const codesContents = await getCodesContents(this.context);
       const treeItems = codesContents.map((result) =>
-        ArticleContentError.isError(result)
+        CodeContentError.isError(result)
           ? new vscode.TreeItem("Failed to load kaggle notebooks")
           : new KaggleTreeItem(result)
       );
       return treeItems;
     } else if (element && element.label === "Models") {
-      const codesContents = await getModelsContents(this.context);
-      const treeItems = codesContents.map((result) =>
-        ArticleContentError.isError(result)
+      const modelContents = await getModelsContents(this.context);
+      const treeItems = modelContents.map((modelContent) =>
+        ModelContentError.isError(modelContent)
           ? new vscode.TreeItem("Failed to load kaggle models")
-          : new KaggleTreeItem(result)
+          : new KaggleTreeItem(modelContent)
       );
       return treeItems;
     }

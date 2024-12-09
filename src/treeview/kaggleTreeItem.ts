@@ -1,5 +1,7 @@
 import * as vscode from "vscode";
-import { ArticleContent } from "../schemas/article";
+import { DatasetContent } from "../schemas/datasets";
+import { ModelContent } from "../schemas/models";
+import { CodeContent } from "../schemas/codes";
 
 function getElapsedTimeFromCurrentGMTTime(published_at: string | undefined): string {
   if (published_at === undefined || published_at === "") {
@@ -48,11 +50,13 @@ function getItemtypeColor(itemtype: string): string {
 }
 
 
+type KaggleContent = DatasetContent | ModelContent | CodeContent;
+
 export class KaggleTreeItem extends vscode.TreeItem {
   slugname: string | undefined;
   itemtype: string | undefined;
 
-  constructor(content: ArticleContent) {
+  constructor(content: KaggleContent) {
     super("", vscode.TreeItemCollapsibleState.None);
 
     this.iconPath = new vscode.ThemeIcon(
