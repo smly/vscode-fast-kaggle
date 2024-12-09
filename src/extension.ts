@@ -42,6 +42,23 @@ const getSlugNameFromJson = (jsonPath: string): string => {
 	return json['id'];
 };
 
+const getWorkspaceRoot = (): string | undefined => {
+	if (vscode.workspace.workspaceFolders !== undefined && vscode.workspace.workspaceFolders.length === 1) {
+		return vscode.workspace.workspaceFolders[0].uri.fsPath;
+	}
+
+	const currentActivePath = vscode.window.activeTextEditor?.document.uri.fsPath;
+	if (!currentActivePath || currentActivePath === undefined) {
+		return;
+	}
+
+	const workspaceRoot = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(currentActivePath))?.uri.fsPath;
+	if (!workspaceRoot || workspaceRoot === undefined) {
+		return;
+	}
+	return workspaceRoot;
+};
+
 export function activate(context: ExtensionContext) {
     const serverModule = context.asAbsolutePath(
         path.join('out', 'server.js')
@@ -144,16 +161,12 @@ export function activate(context: ExtensionContext) {
 						}
 					]
 				};
-				const datasetMetadataJsonString = JSON.stringify(datasetMetadataJson, null, 4);
-				currentActivePath = vscode.window.activeTextEditor?.document.uri.fsPath;
-				if (!currentActivePath || currentActivePath === undefined) {
-					vscode.window.showErrorMessage('No active text editor');
-					return;
-				}
-	
-				const workspaceRoot = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(currentActivePath))?.uri.fsPath;
+				const datasetMetadataJsonString = JSON.stringify(datasetMetadataJson, null, 4);	
+
+				const workspaceRoot = getWorkspaceRoot();
 				if (workspaceRoot === undefined) {
-					vscode.window.showErrorMessage('No active text editor');
+					const errorMsg = 'Could not find workspace root. Open any file in the folder and try again.';
+					vscode.window.showErrorMessage(errorMsg);
 					return;
 				}
 
@@ -234,16 +247,12 @@ export function activate(context: ExtensionContext) {
 					"kernel_sources": [],
 					"model_sources": []
 				};
+
 				const notebookMetadataJsonString = JSON.stringify(notebookMetadataJson, null, 4);
-				currentActivePath = vscode.window.activeTextEditor?.document.uri.fsPath;
-				if (!currentActivePath || currentActivePath === undefined) {
-					vscode.window.showErrorMessage('No active text editor');
-					return;
-				}
-	
-				const workspaceRoot = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(currentActivePath))?.uri.fsPath;
+				const workspaceRoot = getWorkspaceRoot();
 				if (workspaceRoot === undefined) {
-					vscode.window.showErrorMessage('No active text editor');
+					const errorMsg = 'Could not find workspace root. Open any file in the folder and try again.';
+					vscode.window.showErrorMessage(errorMsg);
 					return;
 				}
 
@@ -263,35 +272,36 @@ export function activate(context: ExtensionContext) {
 			}
 		}),
 		vscode.commands.registerCommand('fastkaggle.updateDatasetOrNotebook', async () => {
-			if (!vscode.window.activeTextEditor) {
-				vscode.window.showErrorMessage('No active text editor');
-				return;
+			if (vscode.window.activeTextEditor !== undefined && !vscode.window.activeTextEditor?.document.uri.fsPath.startsWith("extension-output")) {
+				currentActivePath = vscode.window.activeTextEditor?.document.uri.fsPath;
 			}
-			currentActivePath = vscode.window.activeTextEditor?.document.uri.fsPath;
 			if (!currentActivePath || currentActivePath === undefined) {
-				vscode.window.showErrorMessage('No active text editor');
+				vscode.window.showErrorMessage('Could not find active text editor. Open any file in the folder and try again.');
 				return;
 			}
 
 			await updateDatasetOrNotebook(currentActivePath);
 		}),
 		vscode.commands.registerCommand('fastkaggle.getStatus', async () => {
-			if (!vscode.window.activeTextEditor) {
-				vscode.window.showErrorMessage('No active text editor');
-				return;
+			if (vscode.window.activeTextEditor !== undefined && !vscode.window.activeTextEditor?.document.uri.fsPath.startsWith("extension-output")) {
+				currentActivePath = vscode.window.activeTextEditor?.document.uri.fsPath;
 			}
-
-			currentActivePath = vscode.window.activeTextEditor?.document.uri.fsPath;
 			if (!currentActivePath || currentActivePath === undefined) {
-				vscode.window.showErrorMessage('No active text editor');
+				vscode.window.showErrorMessage('Could not find active text editor. Open any file in the folder and try again.');
 				return;
 			}
 
-			const workspaceRoot = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(currentActivePath))?.uri.fsPath;
+			const workspaceRoot = getWorkspaceRoot();
+			if (workspaceRoot === undefined) {
+				const errorMsg = 'Could not find workspace root. Open any file in the folder and try again.';
+				vscode.window.showErrorMessage(errorMsg);
+				return;
+			}
+
 			const datasetDir = findTargetDir("dataset-metadata.json", workspaceRoot, currentActivePath);
 			const kernelDir = findTargetDir("kernel-metadata.json", workspaceRoot, currentActivePath);
 			if ((!datasetDir || datasetDir === undefined) && (!kernelDir || kernelDir === undefined)){
-				vscode.window.showErrorMessage('No active text editor');
+				vscode.window.showErrorMessage('Could not find JSON metadata file. Open any file in the folder and try again.');
 				return;
 			}
 
@@ -360,7 +370,7 @@ export function activate(context: ExtensionContext) {
 
 	function findTargetDir(filename: string, workspaceRoot: string | undefined, path: string): string | undefined {
 		if (workspaceRoot === undefined) {
-			return undefined;
+			return;
 		}
 
 		const relativePath = path.replace(workspaceRoot, '');
@@ -372,15 +382,21 @@ export function activate(context: ExtensionContext) {
 				return `${workspaceRoot}${dir}`;
 			}
 		}
-		return undefined;
+		return;
 	}
 
 	async function updateDatasetOrNotebook(path: string) {
-		const workspaceRoot = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(path))?.uri.fsPath;
+		const workspaceRoot = getWorkspaceRoot();
+		if (workspaceRoot === undefined) {
+			const errorMsg = 'Could not find workspace root. Open any file in the folder and try again.';
+			vscode.window.showErrorMessage(errorMsg);
+			return;
+		}
+
 		const datasetDir = findTargetDir("dataset-metadata.json", workspaceRoot, path);
 		const kernelDir = findTargetDir("kernel-metadata.json", workspaceRoot, path);
 		if ((!datasetDir || datasetDir === undefined) && (!kernelDir || kernelDir === undefined)){
-			vscode.window.showErrorMessage('No active text editor');
+			vscode.window.showErrorMessage('Could not find JSON metadata file. Open any file in the folder and try again.');
 			return;
 		}
 
