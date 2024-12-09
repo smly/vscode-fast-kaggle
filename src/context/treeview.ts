@@ -3,11 +3,11 @@ import { AppContext } from "../extension";
 import { KaggleTreeViewProvider } from "../treeview/kaggleTreeViewProvider";
 
 export const initializeTreeView = (context: AppContext): vscode.Disposable[] => {
-  const articlesTreeViewProvider = new KaggleTreeViewProvider(context);
+  const treeViewProvider = new KaggleTreeViewProvider(context);
 
   return [
     vscode.window.createTreeView("kaggleItemView", {
-      treeDataProvider: articlesTreeViewProvider,
+      treeDataProvider: treeViewProvider,
     }),
   ];
 };
